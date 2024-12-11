@@ -48,7 +48,7 @@ fanfare = mixer.Sound(r'Assets/Music/St3phen - Victory Fanfare.mp3')
 
 
 class Spieler:
-    def __init__(self, x:int, y:int, breite:int, höhe:int, textur: Any, oben: Any, unten: Any, rechts: Any, links: Any) -> None:
+    def __init__(self, x:int, y:int, breite:int, höhe:int, textur: Any, oben: Any, unten: Any, rechts: Any, links: Any, richtung: int) -> None:
         self.x = x
         self.y = y
         self.breite = breite
@@ -58,6 +58,7 @@ class Spieler:
         self.unten = unten
         self.rechts = rechts
         self.links = links
+        self.richtung = richtung
         self.hitbox = (self.x, self.y, self.höhe, self.breite)
 
     def maleSpieler(self, tasten) -> None:
@@ -86,22 +87,30 @@ class Spieler:
 
     def rotieren(self, tasten):
         if tasten[self.oben] and not (tasten[self.rechts] or tasten[self.links]):       # Nach oben
-            return 0
+            self.richtung = 0
+            return self.richtung
         elif tasten[self.unten] and not (tasten[self.rechts] or tasten[self.links]):    # Nach unten
-            return 180
+            self.richtung = 180
+            return self.richtung
         elif tasten[self.rechts] and not (tasten[self.oben] or tasten[self.unten]):     # Nach rechts
-            return -90
+            self.richtung = -90
+            return self.richtung
         elif tasten[self.links] and not (tasten[self.oben] or tasten[self.unten]):      # Nach links
-            return 90
+            self.richtung = 90
+            return self.richtung
         elif tasten[self.oben] and tasten[self.rechts]:     # Diagonal oben rechts
-            return -45
+            self.richtung = -45
+            return self.richtung
         elif tasten[self.oben] and tasten[self.links]:      # Diagonal oben links
-            return 45
+            self.richtung = 45
+            return self.richtung
         elif tasten[self.unten] and tasten[self.rechts]:    # Diagonal unten rechts
-            return -135
+            self.richtung = -135
+            return self.richtung
         elif tasten[self.unten] and tasten[self.links]:     # Diagonal unten links
-            return 135
-        return 0                                            # Standart rotation
+            self.richtung = 135
+            return self.richtung
+        return self.richtung                                # Standart rotation
 
     def collision(self, other: Any):
         self.hitbox = pygame.Rect(self.x, self.y, self.breite, self.höhe)
@@ -146,8 +155,8 @@ def printCol():
     WIN.blit(collision, ColOrt)
 
 
-SpielerEins =  Spieler(400, 500, SPIELER_BREITE, SPIELER_LÄNGE, RAKETE, pygame.K_w, pygame.K_s, pygame.K_d, pygame.K_a)
-SpielerZwei = Spieler(600, 300, SPIELER_BREITE, SPIELER_LÄNGE, RAKETE, pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT)
+SpielerEins =  Spieler(400, 500, SPIELER_BREITE, SPIELER_LÄNGE, RAKETE, pygame.K_w, pygame.K_s, pygame.K_d, pygame.K_a, 0)
+SpielerZwei = Spieler(600, 300, SPIELER_BREITE, SPIELER_LÄNGE, RAKETE, pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT, 0)
 
 def main() -> None:
 
