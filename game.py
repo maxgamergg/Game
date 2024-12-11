@@ -235,8 +235,8 @@ def main() -> None:
 
                 # Spiel neu starten
                 if event.key == pygame.K_ESCAPE and KOLLISION:
-                    SpielerEins.x, SpielerEins.y = 400, 500
-                    SpielerZwei.x, SpielerZwei.y = 600, 300
+                    SpielerEins.x, SpielerEins.y, SpielerEins.richtung = 400, 500, 0
+                    SpielerZwei.x, SpielerZwei.y, SpielerZwei.richtung = 600, 300, 0
                     KOLLISION = not KOLLISION
 
 
