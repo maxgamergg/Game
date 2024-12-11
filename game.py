@@ -14,7 +14,7 @@ BREITE, HÖHE = 1000, 800
 WIN = pygame.display.set_mode((BREITE, HÖHE))
 pygame.display.set_caption('Abduls Spiel')
 
-# spielergröße und geschwindigkeit
+# Spielergröße und geschwindigkeit
 SPIELER_BREITE = 60
 SPIELER_LÄNGE = 100
 SPIELER_VELOCITY = 3
@@ -49,6 +49,19 @@ fanfare = mixer.Sound(r'Assets/Music/St3phen - Victory Fanfare.mp3')
 
 class Spieler:
     def __init__(self, x:int, y:int, breite:int, höhe:int, textur: Any, oben: Any, unten: Any, rechts: Any, links: Any, richtung: int) -> None:
+        """
+        Die Attribute eines Spielers
+        :param x:
+        :param y:
+        :param breite:
+        :param höhe:
+        :param textur:
+        :param oben:
+        :param unten:
+        :param rechts:
+        :param links:
+        :param richtung:
+        """
         self.x = x
         self.y = y
         self.breite = breite
@@ -62,10 +75,23 @@ class Spieler:
         self.hitbox = (self.x, self.y, self.höhe, self.breite)
 
     def maleSpieler(self, tasten) -> None:
+        """
+        Rotiert das Objekt mithilfe der 'rotieren' Funktion und Drawt diese auf den Fenster (WIN)
+        :param tasten:
+        :return:
+        """
         rotierteRakete = pygame.transform.rotate(self.textur, self.rotieren(tasten))
         WIN.blit(rotierteRakete, (self.x, self.y))
 
     def bewegungChecken(self, tasten):
+
+        """
+        Die Steuerung des eigenen Objektes |
+        Wird in einer temporären Variable gespeichert, was die bewegung in der X und Y Achse in einen Frame ermöglicht, womit man flüssige diagonale Bewegungen erreichen kann.
+        :param tasten:
+        :return:
+        """
+
         x_veränderung = 0
         y_veränderung = 0
         if tasten[self.oben] and self.y >= 0:
@@ -86,6 +112,13 @@ class Spieler:
 
 
     def rotieren(self, tasten):
+
+        """
+        Rotiert die Textur des eigenen Objektes anhand der eigenen Steuerungstasten
+        :param tasten:
+        :return:
+        """
+
         if tasten[self.oben] and not (tasten[self.rechts] or tasten[self.links]):       # Nach oben
             self.richtung = 0
             return self.richtung
@@ -113,12 +146,21 @@ class Spieler:
         return self.richtung                                # Standart rotation
 
     def collision(self, other: Any):
+        """
+        Checkt die Kollision von Sich selbst (Objekt) und von einen anderen Objekt mit deren Attribute
+        :return:
+        """
         self.hitbox = pygame.Rect(self.x, self.y, self.breite, self.höhe)
         other.hitbox = pygame.Rect(other.x, other.y, other.breite, other.höhe)
         return self.hitbox.colliderect(other.hitbox)
 
 
 def refreshWin(tasten) -> None:
+
+    """
+    Aktuallisiert den Bildschirm |
+    Drawt die Objekte und Chekt für Kollision mithulfe der Spielerclass
+    """
 
     global KOLLISION
 
@@ -133,7 +175,10 @@ def refreshWin(tasten) -> None:
 
     pygame.display.update()
 
-def Pause():
+def Pause() -> None:
+
+    """Zeigt den Pausebildschirm an"""
+
     WIN.blit(HINTERGRUND, (0, 0))
 
     font = pygame.font.Font(None, 74)
@@ -145,7 +190,12 @@ def Pause():
     pygame.display.update()
 
 
-def printCol():
+def printCol() -> None:
+    """
+    Zeigt die Nachricht bei einer Kollision auf den Fenster (WIN)
+    :return:
+    """
+
     WIN.blit(HINTERGRUND, (0, 0))
 
     font = pygame.font.Font(None, 74)
@@ -154,17 +204,19 @@ def printCol():
 
     WIN.blit(collision, ColOrt)
 
-
+# Die Spieler, ihre Steuerung, Koordinaten und andere Attribute
 SpielerEins =  Spieler(400, 500, SPIELER_BREITE, SPIELER_LÄNGE, RAKETE, pygame.K_w, pygame.K_s, pygame.K_d, pygame.K_a, 0)
 SpielerZwei = Spieler(600, 300, SPIELER_BREITE, SPIELER_LÄNGE, RAKETE, pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT, 0)
 
 def main() -> None:
 
+    """Main Game Funktion"""
+
     global PAUSED
     global KOLLISION
+
     clock = pygame.time.Clock()
     run = True
-
 
     while run:
 
@@ -181,14 +233,16 @@ def main() -> None:
                 if event.key == pygame.K_ESCAPE and not KOLLISION:
                     PAUSED = not PAUSED
 
+                # Spiel neu starten
                 if event.key == pygame.K_ESCAPE and KOLLISION:
                     SpielerEins.x, SpielerEins.y = 400, 500
                     SpielerZwei.x, SpielerZwei.y = 600, 300
                     KOLLISION = not KOLLISION
 
 
-
+        # Überprüft Steuerungsinput, nur wenn keine Kollision vorhanden ist
         if not KOLLISION:
+                # Game Logik die Pausiert wird
                 if not PAUSED:
                     key = pygame.key.get_pressed()
 
@@ -200,11 +254,13 @@ def main() -> None:
 
                     refreshWin(key)
 
+                # Handelt einen Pause Event
                 else:
                     Pause()
 
 
     pygame.quit()
 
+# Ausfühern nur bei direkter Dateiausführung/ vermeidet das Ausführen durch eine andere Datei  (Kann zu Fehlern führen)
 if __name__ == '__main__':
     main()
