@@ -140,7 +140,7 @@ def printCol():
     WIN.blit(HINTERGRUND, (0, 0))
 
     font = pygame.font.Font(None, 74)
-    collision = font.render(f"Collidierte!", True, "BLACK")
+    collision = font.render(f"Verloren!", True, "BLACK")
     ColOrt = collision.get_rect(center=(BREITE / 2, HÖHE / 2))
 
     WIN.blit(collision, ColOrt)
