@@ -3,7 +3,7 @@ from pygame import mixer
 from typing import Any
 from random import randint
 
-
+# Initialisiere Module
 pygame.init()
 mixer.init()
 
@@ -20,6 +20,11 @@ SPIELER_BREITE = 60
 SPIELER_LÄNGE = 100
 SPIELER_VELOCITY = 4
 SPIELER_DIAG_VEL = 2.1
+
+########## Debug Mode ##########
+# Regeneriere Koordinaten 'R'
+DebugMode = False
+########## Debug Mode ##########
 
 # Pause
 PAUSED = False
@@ -46,10 +51,11 @@ full = mixer.Sound(r'Assets/Music/St3phen - Full Power.mp3')
 arcade = mixer.Sound(r'Assets/Music/St3phen - Arcade Tokens.mp3')
 fanfare = mixer.Sound(r'Assets/Music/St3phen - Victory Fanfare.mp3')
 
-print('beyond:' + str(beyond.get_length()))
-print('full:' + str(full.get_length()))
-print('arcade:' + str(arcade.get_length()))
-print('fanfare:' + str(fanfare.get_length()))
+print('musiklänge in sec.')
+print('beyond: ' + str(beyond.get_length()))
+print('full: ' + str(full.get_length()))
+print('arcade: ' + str(arcade.get_length()))
+print('fanfare: ' + str(fanfare.get_length()))
 
 
 class Spieler:
@@ -220,18 +226,22 @@ def printCol() -> None:
 
     WIN.blit(collision, ColOrt)
 
-def SpawnRandX(breite: int):
-    breite = randint(0, breite)
-    return breite
+def SpawnRandX(mal: int, index: int):
+    Breite = []
+    while mal >= 0:
+        value = randint(0, (BREITE - SPIELER_BREITE))
+        Breite.append(value)
+        mal -= 1
+    return Breite[index]
 
 def SpawnRandY(höhe: int):
     höhe = randint(0, höhe)
     return höhe
 
 # Die Spieler, ihre Steuerung, Koordinaten und andere Attribute
-SpielerEins =  Spieler(SpawnRandX(BREITE), SpawnRandY(HÖHE), SPIELER_BREITE, SPIELER_LÄNGE, RAKETE, pygame.K_w, pygame.K_s, pygame.K_d, pygame.K_a, 0)
-SpielerZwei = Spieler(SpawnRandX(BREITE), SpawnRandY(HÖHE), SPIELER_BREITE, SPIELER_LÄNGE, RAKETE, pygame.K_UP, pygame.K_DOWN, pygame.K_RIGHT, pygame.K_LEFT, 0)
-SpielerDrei = Spieler(SpawnRandX(BREITE), SpawnRandY(HÖHE), SPIELER_BREITE, SPIELER_LÄNGE, RAKETE, pygame.K_z, pygame.K_h, pygame.K_j, pygame.K_g, 0)
+SpielerEins = Spieler(SpawnRandX(3, 3), SpawnRandY(HÖHE), SPIELER_BREITE, SPIELER_LÄNGE, RAKETE, pygame.K_w, pygame.K_s, pygame.K_d, pygame.K_a, 0)
+SpielerZwei = Spieler(SpawnRandX(3, 2), SpawnRandY(HÖHE), SPIELER_BREITE, SPIELER_LÄNGE, RAKETE, pygame.K_UP, pygame.K_DOWN, pygame.K_RIGHT, pygame.K_LEFT, 0)
+SpielerDrei = Spieler(SpawnRandX(3 , 1), SpawnRandY(HÖHE), SPIELER_BREITE, SPIELER_LÄNGE, RAKETE, pygame.K_z, pygame.K_h, pygame.K_j, pygame.K_g, 0)
 
 def main() -> None:
 
@@ -260,10 +270,17 @@ def main() -> None:
 
                 # Spiel neu starten
                 if event.key == pygame.K_ESCAPE and KOLLISION:
-                    SpielerEins.x, SpielerEins.y, SpielerEins.richtung = SpawnRandX(BREITE), SpawnRandY(HÖHE), 0
-                    SpielerZwei.x, SpielerZwei.y, SpielerZwei.richtung = SpawnRandX(BREITE), SpawnRandY(HÖHE), 0
-                    SpielerDrei.x, SpielerDrei.y, SpielerDrei.richtung = SpawnRandX(BREITE), SpawnRandY(HÖHE), 0
+                    SpielerEins.x, SpielerEins.y, SpielerEins.richtung = SpawnRandX(3, 3), SpawnRandY(HÖHE), 0
+                    SpielerZwei.x, SpielerZwei.y, SpielerZwei.richtung = SpawnRandX(3, 2), SpawnRandY(HÖHE), 0
+                    SpielerDrei.x, SpielerDrei.y, SpielerDrei.richtung = SpawnRandX(3, 1), SpawnRandY(HÖHE), 0
                     KOLLISION = not KOLLISION
+
+                # Debug Respawn
+                if event.key == pygame.K_r and DebugMode:
+                    SpielerEins.x, SpielerEins.y, SpielerEins.richtung = SpawnRandX(3, 3), SpawnRandY(HÖHE), 0
+                    SpielerZwei.x, SpielerZwei.y, SpielerZwei.richtung = SpawnRandX(3, 2), SpawnRandY(HÖHE), 0
+                    SpielerDrei.x, SpielerDrei.y, SpielerDrei.richtung = SpawnRandX(3, 1), SpawnRandY(HÖHE), 0
+
 
 
         # Überprüft Steuerungsinput, nur wenn keine Kollision vorhanden ist
