@@ -1,6 +1,7 @@
 import pygame
 from pygame import mixer
 from typing import Any
+from random import randint
 
 
 pygame.init()
@@ -171,9 +172,20 @@ def refreshWin(tasten) -> None:
     WIN.blit(HINTERGRUND,(0, 0))
     SpielerEins.maleSpieler(tasten)
     SpielerZwei.maleSpieler(tasten)
+    SpielerDrei.maleSpieler(tasten)
 
     if SpielerEins.collision(SpielerZwei):
         WIN.blit(HINTERGRUND, (0, 0))
+        KOLLISION = True
+        printCol()
+
+    if SpielerDrei.collision(SpielerEins):
+        WIN.blit(HINTERGRUND, (0,0))
+        KOLLISION = True
+        printCol()
+
+    if SpielerDrei.collision(SpielerZwei):
+        WIN.blit(HINTERGRUND, (0,0))
         KOLLISION = True
         printCol()
 
@@ -208,9 +220,18 @@ def printCol() -> None:
 
     WIN.blit(collision, ColOrt)
 
+def SpawnRandX(breite: int):
+    breite = randint(0, breite)
+    return breite
+
+def SpawnRandY(höhe: int):
+    höhe = randint(0, höhe)
+    return höhe
+
 # Die Spieler, ihre Steuerung, Koordinaten und andere Attribute
-SpielerEins =  Spieler(400, 500, SPIELER_BREITE, SPIELER_LÄNGE, RAKETE, pygame.K_w, pygame.K_s, pygame.K_d, pygame.K_a, 0)
-SpielerZwei = Spieler(600, 300, SPIELER_BREITE, SPIELER_LÄNGE, RAKETE, pygame.K_UP, pygame.K_DOWN, pygame.K_RIGHT, pygame.K_LEFT, 0)
+SpielerEins =  Spieler(SpawnRandX(BREITE), SpawnRandY(HÖHE), SPIELER_BREITE, SPIELER_LÄNGE, RAKETE, pygame.K_w, pygame.K_s, pygame.K_d, pygame.K_a, 0)
+SpielerZwei = Spieler(SpawnRandX(BREITE), SpawnRandY(HÖHE), SPIELER_BREITE, SPIELER_LÄNGE, RAKETE, pygame.K_UP, pygame.K_DOWN, pygame.K_RIGHT, pygame.K_LEFT, 0)
+SpielerDrei = Spieler(SpawnRandX(BREITE), SpawnRandY(HÖHE), SPIELER_BREITE, SPIELER_LÄNGE, RAKETE, pygame.K_z, pygame.K_h, pygame.K_j, pygame.K_g, 0)
 
 def main() -> None:
 
@@ -239,8 +260,9 @@ def main() -> None:
 
                 # Spiel neu starten
                 if event.key == pygame.K_ESCAPE and KOLLISION:
-                    SpielerEins.x, SpielerEins.y, SpielerEins.richtung = 400, 500, 0
-                    SpielerZwei.x, SpielerZwei.y, SpielerZwei.richtung = 600, 300, 0
+                    SpielerEins.x, SpielerEins.y, SpielerEins.richtung = SpawnRandX(BREITE), SpawnRandY(HÖHE), 0
+                    SpielerZwei.x, SpielerZwei.y, SpielerZwei.richtung = SpawnRandX(BREITE), SpawnRandY(HÖHE), 0
+                    SpielerDrei.x, SpielerDrei.y, SpielerDrei.richtung = SpawnRandX(BREITE), SpawnRandY(HÖHE), 0
                     KOLLISION = not KOLLISION
 
 
@@ -252,9 +274,11 @@ def main() -> None:
 
                     SpielerEins.rotieren(key)
                     SpielerZwei.rotieren(key)
+                    SpielerDrei.rotieren(key)
 
                     SpielerEins.bewegungChecken(key)
                     SpielerZwei.bewegungChecken(key)
+                    SpielerDrei.bewegungChecken(key)
 
                     refreshWin(key)
 
