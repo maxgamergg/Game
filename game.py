@@ -12,13 +12,13 @@ LAUTSTAERKE = 0.025 # %
 # fenster
 BREITE, HÖHE = 1000, 800
 WIN = pygame.display.set_mode((BREITE, HÖHE))
-pygame.display.set_caption('Abduls Spiel')
+pygame.display.set_caption('Rakete: von Abdul')
 
 # Spielergröße und geschwindigkeit
 SPIELER_BREITE = 60
 SPIELER_LÄNGE = 100
-SPIELER_VELOCITY = 3
-SPIELER_DIAG_VEL = 1.9
+SPIELER_VELOCITY = 4
+SPIELER_DIAG_VEL = 2.1
 
 # Pause
 PAUSED = False
@@ -45,6 +45,10 @@ full = mixer.Sound(r'Assets/Music/St3phen - Full Power.mp3')
 arcade = mixer.Sound(r'Assets/Music/St3phen - Arcade Tokens.mp3')
 fanfare = mixer.Sound(r'Assets/Music/St3phen - Victory Fanfare.mp3')
 
+print('beyond:' + str(beyond.get_length()))
+print('full:' + str(full.get_length()))
+print('arcade:' + str(arcade.get_length()))
+print('fanfare:' + str(fanfare.get_length()))
 
 
 class Spieler:
@@ -206,7 +210,7 @@ def printCol() -> None:
 
 # Die Spieler, ihre Steuerung, Koordinaten und andere Attribute
 SpielerEins =  Spieler(400, 500, SPIELER_BREITE, SPIELER_LÄNGE, RAKETE, pygame.K_w, pygame.K_s, pygame.K_d, pygame.K_a, 0)
-SpielerZwei = Spieler(600, 300, SPIELER_BREITE, SPIELER_LÄNGE, RAKETE, pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT, 0)
+SpielerZwei = Spieler(600, 300, SPIELER_BREITE, SPIELER_LÄNGE, RAKETE, pygame.K_UP, pygame.K_DOWN, pygame.K_RIGHT, pygame.K_LEFT, 0)
 
 def main() -> None:
 
