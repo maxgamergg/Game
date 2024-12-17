@@ -21,9 +21,12 @@ SPIELER_LÄNGE = 100
 SPIELER_VELOCITY = 4
 SPIELER_DIAG_VEL = 2.1
 
+# Spieler drei Aktiv ?
+SPIELER_DREI_AKTIV = False
+
 ########## Debug Mode ##########
 # Regeneriere Koordinaten 'R'
-DebugMode = False
+DebugMode = True
 ########## Debug Mode ##########
 
 # Pause
@@ -178,20 +181,16 @@ def refreshWin(tasten) -> None:
     WIN.blit(HINTERGRUND,(0, 0))
     SpielerEins.maleSpieler(tasten)
     SpielerZwei.maleSpieler(tasten)
-    SpielerDrei.maleSpieler(tasten)
+    if SPIELER_DREI_AKTIV:
+        SpielerDrei.maleSpieler(tasten)
 
     if SpielerEins.collision(SpielerZwei):
         WIN.blit(HINTERGRUND, (0, 0))
         KOLLISION = True
         printCol()
 
-    if SpielerDrei.collision(SpielerEins):
-        WIN.blit(HINTERGRUND, (0,0))
-        KOLLISION = True
-        printCol()
-
-    if SpielerDrei.collision(SpielerZwei):
-        WIN.blit(HINTERGRUND, (0,0))
+    if SPIELER_DREI_AKTIV and (SpielerDrei.collision(SpielerEins) or SpielerDrei.collision(SpielerZwei)):
+        WIN.blit(HINTERGRUND, (0, 0))
         KOLLISION = True
         printCol()
 
@@ -272,14 +271,16 @@ def main() -> None:
                 if event.key == pygame.K_ESCAPE and KOLLISION:
                     SpielerEins.x, SpielerEins.y, SpielerEins.richtung = SpawnRandX(3, 3), SpawnRandY(HÖHE), 0
                     SpielerZwei.x, SpielerZwei.y, SpielerZwei.richtung = SpawnRandX(3, 2), SpawnRandY(HÖHE), 0
-                    SpielerDrei.x, SpielerDrei.y, SpielerDrei.richtung = SpawnRandX(3, 1), SpawnRandY(HÖHE), 0
+                    if SPIELER_DREI_AKTIV:
+                        SpielerDrei.x, SpielerDrei.y, SpielerDrei.richtung = SpawnRandX(3, 1), SpawnRandY(HÖHE), 0
                     KOLLISION = not KOLLISION
 
                 # Debug Respawn
                 if event.key == pygame.K_r and DebugMode:
                     SpielerEins.x, SpielerEins.y, SpielerEins.richtung = SpawnRandX(3, 3), SpawnRandY(HÖHE), 0
                     SpielerZwei.x, SpielerZwei.y, SpielerZwei.richtung = SpawnRandX(3, 2), SpawnRandY(HÖHE), 0
-                    SpielerDrei.x, SpielerDrei.y, SpielerDrei.richtung = SpawnRandX(3, 1), SpawnRandY(HÖHE), 0
+                    if SPIELER_DREI_AKTIV:
+                        SpielerDrei.x, SpielerDrei.y, SpielerDrei.richtung = SpawnRandX(3, 1), SpawnRandY(HÖHE), 0
 
 
 
@@ -291,11 +292,13 @@ def main() -> None:
 
                     SpielerEins.rotieren(key)
                     SpielerZwei.rotieren(key)
-                    SpielerDrei.rotieren(key)
+                    if SPIELER_DREI_AKTIV:
+                        SpielerDrei.rotieren(key)
 
                     SpielerEins.bewegungChecken(key)
                     SpielerZwei.bewegungChecken(key)
-                    SpielerDrei.bewegungChecken(key)
+                    if SPIELER_DREI_AKTIV:
+                        SpielerDrei.bewegungChecken(key)
 
                     refreshWin(key)
 
