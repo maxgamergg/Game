@@ -1,7 +1,7 @@
 import pygame
 from pygame import mixer
 from typing import Any
-from random import randint, choice
+from random import randint
 
 # Initialisiere Module
 pygame.init()
