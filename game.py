@@ -52,6 +52,7 @@ FARBE_ROT: tuple[int, int, int] = (255, 0, 0)
 FARBE_BLAU: tuple[int, int, int] = (0, 0, 255)
 FARBE_SCHWARZ: tuple[int, int, int] = (0, 0, 0)
 FARBE_WEISS: tuple[int, int, int] = (255, 255, 255)
+FARBE_GRAU: tuple[int, int, int] = (50, 50, 50)
 
 # Lade Assets
 HINTERGRUND = pygame.image.load(r'Assets\Images\Space Background.png')
@@ -219,7 +220,7 @@ def refreshWin(tasten) -> None:
 
     # Spieler Eins Feuerspur
     for _ in range(Dichte):
-        feuer_partikel_p1.append(
+        SpielerEinsPartikel.append(
             FeuerSpur(
                 SpielerEins.x + SPIELER_BREITE // 2 + randint(-5, 5),
                 SpielerEins.y + SPIELER_LÄNGE // 2 + randint(-5, 5),
@@ -228,7 +229,7 @@ def refreshWin(tasten) -> None:
         )
 
     for _ in range(Dichte):
-        feuer_partikel_p2.append(
+        SpielerZweiPartikel.append(
             FeuerSpur(
                 SpielerZwei.x + SPIELER_BREITE // 2 + randint(-5, 5),
                 SpielerZwei.y + SPIELER_LÄNGE // 2 + randint(-5, 5),
@@ -236,20 +237,20 @@ def refreshWin(tasten) -> None:
             )
         )
     # Partikel malen und Lebenszeit Überprüfen / Updaten und Spieler Malen
-    for partikel in feuer_partikel_p1[:]:
+    for partikel in SpielerEinsPartikel[:]:
         partikel.update()
         partikel.malen(WIN)
         if partikel.Größe <= 0 or partikel.Lebensdauer <= 0:
-            feuer_partikel_p1.remove(partikel)
+            SpielerEinsPartikel.remove(partikel)
 
     SpielerEins.maleSpieler(tasten)
 
     # Partikel malen und Lebenszeit Überprüfen / Updaten und Spieler Malen
-    for partikel in feuer_partikel_p2[:]:
+    for partikel in SpielerZweiPartikel[:]:
         partikel.update()
         partikel.malen(WIN)
         if partikel.Größe <= 0 or partikel.Lebensdauer <= 0:
-            feuer_partikel_p2.remove(partikel)
+            SpielerZweiPartikel.remove(partikel)
 
     SpielerZwei.maleSpieler(tasten)
 
@@ -268,7 +269,7 @@ def refreshWin(tasten) -> None:
         printCol('ZZ')
 
     # Kollisionserkennung: Spieler 2 kann nicht in die Spur von Spieler 1 laufen
-    for partikel in feuer_partikel_p1:
+    for partikel in SpielerEinsPartikel:
         if (
             SpielerZwei.x < partikel.x < SpielerZwei.x + SPIELER_BREITE
             and
@@ -278,7 +279,7 @@ def refreshWin(tasten) -> None:
             printCol('Spieler Blau ist in die Spur vom Roten Spieler geflogen!')
 
     # Kollisionserkennung: Spieler 1 kann nicht in die Spur von Spieler 2 laufen
-    for partikel in feuer_partikel_p2:
+    for partikel in SpielerZweiPartikel:
         if (
             SpielerEins.x < partikel.x < SpielerEins.x + SPIELER_BREITE
             and
@@ -298,9 +299,9 @@ def Pause() -> None:
 
     font = pygame.font.Font(None, 74)
     pause = font.render("PAUSIERT", True, "BLACK")
-    PausePos = pause.get_rect(center=(BREITE / 2, HÖHE / 2))
+    PausePos = pause.get_rect(center=(BREITE / 2, HÖHE / 2 - 75))
 
-    pygame.draw.rect(WIN, "WHITE", PausePos.inflate(20, 20))
+    pygame.draw.rect(WIN, FARBE_WEISS, PausePos.inflate(40, 40))
 
     WIN.blit(pause, PausePos)
 
@@ -324,37 +325,47 @@ def options_menu():
 
     clock = pygame.time.Clock()
     slider_rect = pygame.Rect(BREITE // 4, HÖHE // 2, BREITE // 2, 20)
-    back_button = pygame.Rect(BREITE // 2 - 75, HÖHE - 100, 150, 50)
-    toggle_button = pygame.Rect(BREITE // 2 - 75, HÖHE // 3, 150, 50)
+    back_button = pygame.Rect(BREITE // 2 - 100, HÖHE - 100, 200, 50)
+    toggle_button = pygame.Rect(BREITE // 2 - 150, HÖHE // 3, 300, 50)
 
     while True:
         WIN.fill(FARBE_WEISS)
+        mouse_pos = pygame.mouse.get_pos()
 
         # Titeltext
         font = pygame.font.Font(None, 74)
-        options_text = font.render("Optionen", True, FARBE_SCHWARZ)
+        options_text = font.render("Optionen", True, FARBE_BLAU)
         options_rect = options_text.get_rect(center=(BREITE / 2, 50))
         WIN.blit(options_text, options_rect)
 
         # Toggle Button für Musik
-        pygame.draw.rect(WIN, FARBE_ROT if not music_on else FARBE_BLAU, toggle_button)
-        toggle_text = font.render("Musik: AN" if music_on else "Musik: AUS", True, FARBE_WEISS)
+        pygame.draw.rect(WIN, FARBE_WEISS, toggle_button)
+        toggle_text = font.render("Musik: AN" if music_on else "Musik: AUS", True, FARBE_ROT if not music_on else FARBE_BLAU)
         toggle_text_rect = toggle_text.get_rect(center=toggle_button.center)
+        if toggle_text_rect.collidepoint(mouse_pos):
+            pygame.draw.rect(WIN, FARBE_GRAU, toggle_text_rect.inflate(20, 20))
         WIN.blit(toggle_text, toggle_text_rect)
 
         # Lautstärkeregler
-        draw_slider(slider_rect.x, slider_rect.y, slider_rect.width, slider_rect.height, volume)
+
         slider_text = font.render(f"Lautstärke: {int(volume * 100)}%", True, FARBE_SCHWARZ)
         slider_text_rect = slider_text.get_rect(center=(BREITE / 2, slider_rect.y - 40))
+        if slider_rect.collidepoint(mouse_pos):
+            pygame.draw.rect(WIN, FARBE_SCHWARZ, slider_rect.inflate(10, 10))
+        draw_slider(slider_rect.x, slider_rect.y, slider_rect.width, slider_rect.height, volume)
         WIN.blit(slider_text, slider_text_rect)
 
         # Zurück-Button
-        pygame.draw.rect(WIN, FARBE_SCHWARZ, back_button)
-        back_text = font.render("Zurück", True, FARBE_WEISS)
+        pygame.draw.rect(WIN, FARBE_WEISS, back_button)
+        back_text = font.render("Zurück", True, FARBE_BLAU)
         back_text_rect = back_text.get_rect(center=back_button.center)
+        if back_button.collidepoint(mouse_pos):
+            pygame.draw.rect(WIN, FARBE_GRAU, back_button.inflate(20, 20))
         WIN.blit(back_text, back_text_rect)
 
+
         pygame.display.update()
+
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -407,11 +418,11 @@ def main_menu():
 
         # Verdunkelungseffekt durch Färbung der Buttons, wenn die Maus darüber fährt
         if start_game_rect.collidepoint(mouse_pos):
-            pygame.draw.rect(WIN, (50, 50, 50), start_game_rect.inflate(20, 20))  # Verdunkelung (Dunkelgrau)
+            pygame.draw.rect(WIN, FARBE_GRAU, start_game_rect.inflate(20, 20))  # Verdunkelung (Dunkelgrau)
         if options_rect.collidepoint(mouse_pos):
-            pygame.draw.rect(WIN, (50, 50, 50), options_rect.inflate(20, 20))
+            pygame.draw.rect(WIN, FARBE_GRAU, options_rect.inflate(20, 20))
         if quit_rect.collidepoint(mouse_pos):
-            pygame.draw.rect(WIN, (50, 50, 50), quit_rect.inflate(20, 20))
+            pygame.draw.rect(WIN, FARBE_GRAU, quit_rect.inflate(20, 20))
 
         # Buttons und Texte zeichnen
         WIN.blit(start_game_text, start_game_rect)
@@ -476,8 +487,8 @@ SpielerZwei = Spieler(670, 350, SPIELER_BREITE, SPIELER_LÄNGE, RAKETE, pygame.K
 SpielerDrei = Spieler(SpawnRandX(3, 1), SpawnRandY(HÖHE), SPIELER_BREITE, SPIELER_LÄNGE, RAKETE, pygame.K_z, pygame.K_h, pygame.K_j, pygame.K_g, 0)
 
 # Die Liste um die Feuerpartikel zu speichern
-feuer_partikel_p1 = [] # SpielerEins Partikel liste
-feuer_partikel_p2 = [] # SpielerZwei Partikel liste
+SpielerEinsPartikel = [] # SpielerEins Partikel liste
+SpielerZweiPartikel = [] # SpielerZwei Partikel liste
 
 def main() -> None:
 
@@ -554,8 +565,8 @@ def main() -> None:
                 else:
                     Pause()
         else:
-            feuer_partikel_p1.clear()
-            feuer_partikel_p2.clear()
+            SpielerEinsPartikel.clear()
+            SpielerZweiPartikel.clear()
 
     pygame.quit()
 
