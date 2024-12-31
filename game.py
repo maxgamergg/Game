@@ -15,6 +15,10 @@ BREITE, HÖHE = 1000, 800
 WIN = pygame.display.set_mode((BREITE, HÖHE))
 pygame.display.set_caption('Rakete: von Abdul')
 
+### GUI ###
+# Abrundung Knöpfe
+ABRUNDUNG: int = 15
+
 # Framerate (von der Logik)
 FRAMERATE: int = 120
 
@@ -52,7 +56,7 @@ FARBE_ROT: tuple[int, int, int] = (255, 0, 0)
 FARBE_BLAU: tuple[int, int, int] = (0, 0, 255)
 FARBE_SCHWARZ: tuple[int, int, int] = (0, 0, 0)
 FARBE_WEISS: tuple[int, int, int] = (255, 255, 255)
-FARBE_GRAU: tuple[int, int, int] = (50, 50, 50)
+FARBE_GRAU: tuple[int, int, int] = (80, 80, 80)
 
 # Lade Assets
 HINTERGRUND = pygame.image.load(r'Assets\Images\Space Background.png')
@@ -301,13 +305,13 @@ def Pause() -> None:
     pause = font.render("PAUSIERT", True, "BLACK")
     PausePos = pause.get_rect(center=(BREITE / 2, HÖHE / 2 - 75))
 
-    pygame.draw.rect(WIN, FARBE_WEISS, PausePos.inflate(40, 40))
+    pygame.draw.rect(WIN, FARBE_WEISS, PausePos.inflate(40, 40), border_radius=15)
 
     WIN.blit(pause, PausePos)
 
     pygame.display.update()
 
-def draw_slider(x, y, width, height, value):
+def draw_slider(x, y, width, height, value, hover):
     """
     Zeichnet einen Lautstärkeregler (Slider).
     """
@@ -343,7 +347,7 @@ def options_menu():
         toggle_text = font.render("Musik: AN" if music_on else "Musik: AUS", True, FARBE_ROT if not music_on else FARBE_BLAU)
         toggle_text_rect = toggle_text.get_rect(center=toggle_button.center)
         if toggle_text_rect.collidepoint(mouse_pos):
-            pygame.draw.rect(WIN, FARBE_GRAU, toggle_text_rect.inflate(20, 20))
+            pygame.draw.rect(WIN, FARBE_GRAU, toggle_text_rect.inflate(20, 20), border_radius=ABRUNDUNG)
         WIN.blit(toggle_text, toggle_text_rect)
 
         # Lautstärkeregler
@@ -351,8 +355,8 @@ def options_menu():
         slider_text = font.render(f"Lautstärke: {int(volume * 100)}%", True, FARBE_SCHWARZ)
         slider_text_rect = slider_text.get_rect(center=(BREITE / 2, slider_rect.y - 40))
         if slider_rect.collidepoint(mouse_pos):
-            pygame.draw.rect(WIN, FARBE_SCHWARZ, slider_rect.inflate(10, 10))
-        draw_slider(slider_rect.x, slider_rect.y, slider_rect.width, slider_rect.height, volume)
+            pygame.draw.rect(WIN, FARBE_SCHWARZ, slider_rect.inflate(10, 10), border_radius=ABRUNDUNG)
+        draw_slider(slider_rect.x, slider_rect.y, slider_rect.width, slider_rect.height, volume, mouse_pos)
         WIN.blit(slider_text, slider_text_rect)
 
         # Zurück-Button
@@ -360,7 +364,7 @@ def options_menu():
         back_text = font.render("Zurück", True, FARBE_BLAU)
         back_text_rect = back_text.get_rect(center=back_button.center)
         if back_button.collidepoint(mouse_pos):
-            pygame.draw.rect(WIN, FARBE_GRAU, back_button.inflate(20, 20))
+            pygame.draw.rect(WIN, FARBE_GRAU, back_button.inflate(20, 20), border_radius=ABRUNDUNG)
         WIN.blit(back_text, back_text_rect)
 
 
@@ -418,11 +422,11 @@ def main_menu():
 
         # Verdunkelungseffekt durch Färbung der Buttons, wenn die Maus darüber fährt
         if start_game_rect.collidepoint(mouse_pos):
-            pygame.draw.rect(WIN, FARBE_GRAU, start_game_rect.inflate(20, 20))  # Verdunkelung (Dunkelgrau)
+            pygame.draw.rect(WIN, FARBE_GRAU, start_game_rect.inflate(20, 20), border_radius=ABRUNDUNG)  # Verdunkelung (Dunkelgrau)
         if options_rect.collidepoint(mouse_pos):
-            pygame.draw.rect(WIN, FARBE_GRAU, options_rect.inflate(20, 20))
+            pygame.draw.rect(WIN, FARBE_GRAU, options_rect.inflate(20, 20), border_radius=ABRUNDUNG)
         if quit_rect.collidepoint(mouse_pos):
-            pygame.draw.rect(WIN, FARBE_GRAU, quit_rect.inflate(20, 20))
+            pygame.draw.rect(WIN, FARBE_GRAU, quit_rect.inflate(20, 20), border_radius=ABRUNDUNG)
 
         # Buttons und Texte zeichnen
         WIN.blit(start_game_text, start_game_rect)
@@ -457,7 +461,7 @@ def printCol(wer: any, ) -> None:
     collision = font.render(f"{wer}", True, "BLACK")
     ColPos = collision.get_rect(center=(BREITE / 2, HÖHE / 2))
 
-    pygame.draw.rect(WIN, "WHITE", ColPos.inflate(20, 20))
+    pygame.draw.rect(WIN, "WHITE", ColPos.inflate(20, 20), border_radius=ABRUNDUNG)
 
     WIN.blit(collision, ColPos)
 
