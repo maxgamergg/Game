@@ -1,13 +1,16 @@
 import pygame
 from pygame import mixer
 from typing import Any
-from random import randint
+from random import randint, shuffle
+import time
+import threading
+from math import sqrt
 
-# Initialisiere Module
+
+# Initialisiere Pygame
 pygame.init()
-mixer.init()
 
-# Spiel Aktiv (Spieler am Spielen)
+# Spiel aktiv (Spieler am Spielen)
 spiel_aktiv = False
 
 # fenster
@@ -19,27 +22,25 @@ pygame.display.set_caption('Rakete: von Abdul')
 # Abrundung Knöpfe
 ABRUNDUNG: int = 15
 
-# Framerate (von der Logik)
-FRAMERATE: int = 120
+# Ticks per Sec. (Logikupdate)
+TPS: int = 120
+
 
 # Spielergröße und Geschwindigkeit
 SPIELER_BREITE: int = 60
 SPIELER_LÄNGE: int = 100
 SPIELER_VELOCITY: float = 4
-SPIELER_DIAG_VEL: float = 2.9
+SPIELER_DIAG_VEL: float = SPIELER_VELOCITY / sqrt(2)
 
 # Feuerspur Lebensdauer (in sec.)
-FEUERDAUER: int = 20
+FEUERDAUER: int = 6
 
 # Dichte der Feuerpartikel
 Dichte = 3
 
 ########## Debug Mode ##########
-# Regeneriere Koordinaten 'R' (Wurde noch nicht implementiert zum vollem Game)
 # Logt die aktuellen Koordinaten der Spieler in die Konsole mit 'K'
 DebugMode: bool = True
-# Status vom dritten Spieler (Testspieler)
-SPIELER_DREI_AKTIV: bool = False
 ########## Debug Mode ##########
 
 # Pause
@@ -63,24 +64,20 @@ HINTERGRUND = pygame.image.load(r'Assets\Images\Space Background.png')
 tempRAKETE = pygame.image.load(r'Assets\Images\rakete.png')
 RAKETE = pygame.transform.scale(tempRAKETE, (SPIELER_BREITE, SPIELER_LÄNGE))
 
-# Lade Musik
-beyond = mixer.Sound(r'Assets/Music/St3phen - Beyond The Twilight.mp3')
-full = mixer.Sound(r'Assets/Music/St3phen - Full Power.mp3')
-arcade = mixer.Sound(r'Assets/Music/St3phen - Arcade Tokens.mp3')
-fanfare = mixer.Sound(r'Assets/Music/St3phen - Victory Fanfare.mp3')
+
+# Lade Musik (Relative Pfade)
+beyond = r'Assets/Music/St3phen - Beyond The Twilight.mp3'
+full = r'Assets/Music/St3phen - Full Power.mp3'
+arcade = r'Assets/Music/St3phen - Arcade Tokens.mp3'
+fanfare = r'Assets/Music/St3phen - Victory Fanfare.mp3'
 
 # Liste der Musikdateien
 musikliste = [beyond, full, arcade, fanfare]
-
+shuffle(musikliste)
 # Variablen für Musik
 music_on = True
-volume = 0.5  # Startlautstärke (0.0 bis 1.0)
-
-print('musiklänge in sec.\n')
-print('beyond: ' + str(beyond.get_length()))
-print('full: ' + str(full.get_length()))
-print('arcade: ' + str(arcade.get_length()))
-print('fanfare: ' + str(fanfare.get_length()))
+startVolume = 0.2  # Startlautstärke (0.0 bis 1.0)
+music_thread = None
 
 
 class Spieler:
@@ -192,24 +189,70 @@ class Spieler:
 
 
 class FeuerSpur:
-    def __init__(self, x: int, y: int, Lebensdauer: int, farbe: tuple[int, int, int]):
+    def __init__(self, x: int, y: int, lebensdauer, farbe: tuple[int, int, int]):
         self.x = x
         self.y = y
         self.Größe = randint(3, 7)
-        self.Lebensdauer = Lebensdauer * FRAMERATE
+        self.lebensdauer = lebensdauer * (TPS / 2)  # Aktuelle verbleibende Lebensdauer
+        self.maxLebensdauer = lebensdauer * (TPS / 2)  # Ursprüngliche Lebensdauer
         self.Farbe = farbe
+        self.ursprüngliche_Größe = self.Größe  # Speichere die ursprüngliche Größe
 
     def update(self):
-        if self.Größe >= 0:
-            self.Größe -= 0.03 # Nimmt pro Aufrufung Weg von der größe wird jedoch auf int "getrimmt" im Laufe des Spiels
-        self.Lebensdauer -= 1 # Nimmt pro Aufrufung einen Frame Weg von der Lebensdauer
+        if self.Größe > 0:
+            # Größe proportional zur verbleibenden Lebensdauer berechnen
+            self.Größe = max(0, self.ursprüngliche_Größe * (self.lebensdauer / self.maxLebensdauer))
+        self.lebensdauer -= 1  # Lebensdauer wird reduziert ()
 
     def malen(self, fenster):
-        if self.Größe >= 0:
+        if self.Größe > 0 and self.lebensdauer > 0:
             pygame.draw.circle(fenster, self.Farbe, (self.x, self.y), int(self.Größe))
 
 
 
+def musik(liste : list[any], volume: float, fade_in=8000, fade_out=8000):
+
+    """
+    Die eigentliche Musiklogik, die im Thread ausgeführt wird.
+    :param liste: # Musikliste
+    :param volume: # Lautstärke
+    :param fade_in: # Standart 8000 ms
+    :param fade_out: # Standart 8000 ms
+    """
+
+    mixer.init() # Initialisiere den Pygame Sound Mixer
+    mixer.music.set_volume(volume / 10)
+
+    for musik in liste:
+        print(f"Spiele Musik: {musik}")
+        mixer.music.load(musik)
+        mixer.music.play(fade_ms=fade_in)
+        while mixer.music.get_busy(): # Wartet bis Musik fertig ist
+            time.sleep(1)
+        
+    print(f"Fading out: {musik}")
+    mixer.music.fadeout(fade_out)
+    time.sleep(fade_out / 1000)  # Warten, bis Fade-Out abgeschlossen ist
+
+    print("Musikwiedergabe beendet.")
+
+def musikThreadManager(volume, musikliste):
+
+    """
+    Verwalte die Musik-Logik in einem separaten Thread.
+    Diese Funktion wird im Haupt-Gameloop aufgerufen.
+
+    https://docs.python.org/3/library/threading.html#module-threading
+
+    """
+
+    global music_thread, music_on
+    if music_on:
+        if music_thread is None or not music_thread.is_alive():  # Prüfen, ob kein aktiver Musik-Thread läuft
+            music_thread = threading.Thread(target=musik, args=(musikliste, volume))
+            music_thread.start()
+            print("Musik-Thread gestartet.")
+        music_on = False
 
 def refreshWin(tasten) -> None:
 
@@ -228,23 +271,23 @@ def refreshWin(tasten) -> None:
             FeuerSpur(
                 SpielerEins.x + SPIELER_BREITE // 2 + randint(-5, 5),
                 SpielerEins.y + SPIELER_LÄNGE // 2 + randint(-5, 5),
-                90, FARBE_ROT
+                FEUERDAUER, FARBE_ROT
             )
         )
-
+    # Spieler Zwei Feuerspur
     for _ in range(Dichte):
         SpielerZweiPartikel.append(
             FeuerSpur(
                 SpielerZwei.x + SPIELER_BREITE // 2 + randint(-5, 5),
                 SpielerZwei.y + SPIELER_LÄNGE // 2 + randint(-5, 5),
-                90, FARBE_BLAU
+                FEUERDAUER, FARBE_BLAU
             )
         )
     # Partikel malen und Lebenszeit Überprüfen / Updaten und Spieler Malen
     for partikel in SpielerEinsPartikel[:]:
         partikel.update()
         partikel.malen(WIN)
-        if partikel.Größe <= 0 or partikel.Lebensdauer <= 0:
+        if partikel.Größe <= 0 or partikel.lebensdauer <= 0:
             SpielerEinsPartikel.remove(partikel)
 
     SpielerEins.maleSpieler(tasten)
@@ -253,24 +296,17 @@ def refreshWin(tasten) -> None:
     for partikel in SpielerZweiPartikel[:]:
         partikel.update()
         partikel.malen(WIN)
-        if partikel.Größe <= 0 or partikel.Lebensdauer <= 0:
+        if partikel.Größe <= 0 or partikel.lebensdauer <= 0:
             SpielerZweiPartikel.remove(partikel)
 
     SpielerZwei.maleSpieler(tasten)
 
-    if SPIELER_DREI_AKTIV:
-        SpielerDrei.maleSpieler(tasten)
-
     if SpielerEins.collision(SpielerZwei):
         WIN.blit(HINTERGRUND, (0, 0))
         KOLLISION = True
-        printCol('Verloren!')
+        printCol('Kollision!')
         # Ich kann nicht überprüfen welche Rakete in welche hereingeflogen ist aber man könnte es machen, indem man die richtung des Spielers dann benutzt, was etwas schwierig sein kann.
 
-    if SPIELER_DREI_AKTIV and (SpielerDrei.collision(SpielerEins) or SpielerDrei.collision(SpielerZwei)):
-        WIN.blit(HINTERGRUND, (0, 0))
-        KOLLISION = True
-        printCol('ZZ')
 
     # Kollisionserkennung: Spieler 2 kann nicht in die Spur von Spieler 1 laufen
     for partikel in SpielerEinsPartikel:
@@ -280,7 +316,7 @@ def refreshWin(tasten) -> None:
             SpielerZwei.y < partikel.y < SpielerZwei.y + SPIELER_BREITE
         ):
             KOLLISION = True
-            printCol('Spieler Blau ist in die Spur vom Roten Spieler geflogen!')
+            printCol('Punkt für BLAU!')
 
     # Kollisionserkennung: Spieler 1 kann nicht in die Spur von Spieler 2 laufen
     for partikel in SpielerZweiPartikel:
@@ -290,7 +326,7 @@ def refreshWin(tasten) -> None:
             SpielerEins.y < partikel.y < SpielerEins.y + SPIELER_BREITE
         ):
             KOLLISION = True
-            printCol('Spieler Rot ist in die Spur vom Blauen Spieler geflogen!')
+            printCol('Punkt für ROT!')
 
 
     pygame.display.update()
@@ -311,7 +347,7 @@ def Pause() -> None:
 
     pygame.display.update()
 
-def draw_slider(x, y, width, height, value, hover):
+def draw_slider(x, y, width, height, value):
     """
     Zeichnet einen Lautstärkeregler (Slider).
     """
@@ -325,7 +361,7 @@ def options_menu():
     """
     Zeigt das Optionsmenü an.
     """
-    global music_on, volume
+    global music_on, startVolume
 
     clock = pygame.time.Clock()
     slider_rect = pygame.Rect(BREITE // 4, HÖHE // 2, BREITE // 2, 20)
@@ -352,11 +388,11 @@ def options_menu():
 
         # Lautstärkeregler
 
-        slider_text = font.render(f"Lautstärke: {int(volume * 100)}%", True, FARBE_SCHWARZ)
+        slider_text = font.render(f"Lautstärke: {int(startVolume * 100)}%", True, FARBE_SCHWARZ)
         slider_text_rect = slider_text.get_rect(center=(BREITE / 2, slider_rect.y - 40))
         if slider_rect.collidepoint(mouse_pos):
             pygame.draw.rect(WIN, FARBE_SCHWARZ, slider_rect.inflate(10, 10), border_radius=ABRUNDUNG)
-        draw_slider(slider_rect.x, slider_rect.y, slider_rect.width, slider_rect.height, volume, mouse_pos)
+        draw_slider(slider_rect.x, slider_rect.y, slider_rect.width, slider_rect.height, startVolume)
         WIN.blit(slider_text, slider_text_rect)
 
         # Zurück-Button
@@ -386,9 +422,9 @@ def options_menu():
                 if slider_rect.collidepoint(event.pos):
                     # Slider-Wert basierend auf Mausposition
                     relative_x = event.pos[0] - slider_rect.x
-                    volume = max(0, min(1, relative_x / slider_rect.width))  # Zwischen 0 und 1
+                    startVolume = max(0, min(1, relative_x / slider_rect.width))  # Zwischen 0 und 1
 
-        clock.tick(FRAMERATE)
+        clock.tick(TPS)
 
 
 def main_menu():
@@ -396,9 +432,9 @@ def main_menu():
     Zeigt das Hauptmenü des Spiels an und verarbeitet Benutzerinteraktionen.
     """
 
-    # Framerate (der Logik)
+    # TPS
     clock = pygame.time.Clock()
-    clock.tick(FRAMERATE)
+    clock.tick(TPS)
 
     menu_font = pygame.font.Font(None, 74)  # Schriftart für das Menü
     options_font = pygame.font.Font(None, 36)  # Kleinere Schrift für die Optionen (Einstellung für Steuerung, Audio etc.) !!! NICHT IMPLEMENTIERT !!!
@@ -465,30 +501,11 @@ def printCol(wer: any, ) -> None:
 
     WIN.blit(collision, ColPos)
 
-def SpawnRandX(mal: int, index: int):
-
-    """Debugfunktion"""
-
-    Breite = []
-    while mal >= 0:
-        value = randint(0, (BREITE - SPIELER_BREITE))
-        Breite.append(value)
-        mal -= 1
-    return Breite[index]
-
-def SpawnRandY(höhe: int):
-
-    """Debugfunktion"""
-
-    höhe = randint(0, höhe)
-    return höhe
-
 
 
 # Die Spieler, ihre Steuerung, Koordinaten und andere Attribute
 SpielerEins = Spieler(270, 350, SPIELER_BREITE, SPIELER_LÄNGE, RAKETE, pygame.K_w, pygame.K_s, pygame.K_d, pygame.K_a, 0)
 SpielerZwei = Spieler(670, 350, SPIELER_BREITE, SPIELER_LÄNGE, RAKETE, pygame.K_UP, pygame.K_DOWN, pygame.K_RIGHT, pygame.K_LEFT, 0)
-SpielerDrei = Spieler(SpawnRandX(3, 1), SpawnRandY(HÖHE), SPIELER_BREITE, SPIELER_LÄNGE, RAKETE, pygame.K_z, pygame.K_h, pygame.K_j, pygame.K_g, 0)
 
 # Die Liste um die Feuerpartikel zu speichern
 SpielerEinsPartikel = [] # SpielerEins Partikel liste
@@ -509,8 +526,9 @@ def main() -> None:
     while run:
 
         # Framerate (der Logik)
-        clock.tick(FRAMERATE)
+        clock.tick(TPS)
 
+        musikThreadManager(startVolume, musikliste)
         # fenster schließ funktion
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -525,26 +543,14 @@ def main() -> None:
                 if event.key == pygame.K_ESCAPE and KOLLISION:
                     SpielerEins.x, SpielerEins.y, SpielerEins.richtung = 270, 350, 0
                     SpielerZwei.x, SpielerZwei.y, SpielerZwei.richtung = 670, 350, 0
-                    if SPIELER_DREI_AKTIV:
-                        SpielerDrei.x, SpielerDrei.y, SpielerDrei.richtung = SpawnRandX(3, 1), SpawnRandY(HÖHE), 0
                     KOLLISION = not KOLLISION
 
-                # Debug Respawn
-                if event.key == pygame.K_r and DebugMode:
-                    SpielerEins.x, SpielerEins.y, SpielerEins.richtung = SpawnRandX(3, 3), SpawnRandY(HÖHE), 0
-                    SpielerZwei.x, SpielerZwei.y, SpielerZwei.richtung = SpawnRandX(3, 2), SpawnRandY(HÖHE), 0
-                    if SPIELER_DREI_AKTIV:
-                        SpielerDrei.x, SpielerDrei.y, SpielerDrei.richtung = SpawnRandX(3, 1), SpawnRandY(HÖHE), 0
 
                 # Debug Koordinaten in die Konsole ausgeben
                 if event.key == pygame.K_k and DebugMode:
                     print('Koordinaten:\n')
                     print(f'Erster Spieler X: {SpielerEins.x}, Y: {SpielerEins.y}')
                     print(f'Zweiter Spieler X: {SpielerZwei.x}, Y: {SpielerZwei.y}')
-
-                    if SPIELER_DREI_AKTIV:
-                        print(f'Dritter Spieler X: {SpielerDrei.x}, Y: {SpielerDrei.y}')
-
 
 
         # Überprüft Steuerungsinput, nur wenn keine Kollision vorhanden ist
@@ -555,13 +561,9 @@ def main() -> None:
 
                     SpielerEins.rotieren(key)
                     SpielerZwei.rotieren(key)
-                    if SPIELER_DREI_AKTIV:
-                        SpielerDrei.rotieren(key)
 
                     SpielerEins.bewegungChecken(key)
                     SpielerZwei.bewegungChecken(key)
-                    if SPIELER_DREI_AKTIV:
-                        SpielerDrei.bewegungChecken(key)
 
                     refreshWin(key)
 
